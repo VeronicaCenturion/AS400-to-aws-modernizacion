@@ -1,0 +1,23 @@
+name: Deploy PF a S3
+
+on:
+  push:
+    branches: [ principal, main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Subir archivos a S3
+        run: |
+          aws s3 cp table-mappings.json s3://rpg-migracion-vcenturion-2026/pf-migrados/ --region us-east-1 || echo "no existe table-mappings.json"
+          aws s3 cp glue_job_clientes.py s3://rpg-migracion-vcenturion-2026/pf-migrados/ --region us-east-1 || echo "no existe glue_job_clientes.py"
+          aws s3 sync . s3://rpg-migracion-vcenturion-2026/pf-migrados/ --exclude ".git/*" --exclude ".github/*" --region us-east-1
+          echo "✅ Deploy completado"
